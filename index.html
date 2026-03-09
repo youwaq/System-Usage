@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>مراقب النظام</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#07090f;
+  --card:#0d1117;
+  --border:#1e2d40;
+  --blue:#00aaff;
+  --green:#00e676;
+  --orange:#ff6d00;
+  --red:#ff1744;
+  --yellow:#ffd600;
+  --purple:#d500f9;
+  --text:#cdd9e5;
+  --dim:#4a6080;
+  --mono:'IBM Plex Mono',monospace;
+  --arabic:'Tajawal',sans-serif;
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--arabic);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* خلفية شبكة */
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0,170,255,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,230,118,0.03) 0%, transparent 60%);
+  pointer-events:none;z-index:0;
+}
+
+/* ═══════ HEADER ═══════ */
+header{
+  position:relative;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 24px;
+  border-bottom:1px solid var(--border);
+  background:rgba(13,17,23,0.95);
+  backdrop-filter:blur(10px);
+}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{
+  width:40px;height:40px;
+  background:linear-gradient(135deg,#00aaff22,#00aaff44);
+  border:1px solid var(--blue);
+  border-radius:10px;
+  display:grid;place-items:center;
+  box-shadow:0 0 16px rgba(0,170,255,0.3);
+}
+.brand-icon svg{width:22px;height:22px}
+.brand-name{font-size:20px;font-weight:900;color:#fff;letter-spacing:1px}
+.brand-name span{color:var(--blue)}
+.brand-sub{font-size:11px;color:var(--dim);margin-top:2px}
+
+.header-status{display:flex;align-items:center;gap:18px;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.pill{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(0,230,118,0.08);
+  border:1px solid rgba(0,230,118,0.2);
+  border-radius:20px;padding:4px 12px;
+  color:var(--green);font-size:11px;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+
+/* ═══════ LAYOUT ═══════ */
+.wrap{position:relative;z-index:10;padding:20px;max-width:1400px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+
+/* ═══════ TOP STATS ═══════ */
+.top-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px 18px;
+  position:relative;overflow:hidden;
+  transition:border-color 0.3s;
+}
+.stat-card:hover{border-color:var(--blue)}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+}
+.stat-card.s-blue::before{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
+.stat-card.s-green::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.stat-card.s-orange::before{background:linear-gradient(90deg,transparent,var(--orange),transparent)}
+.stat-card.s-purple::before{background:linear-gradient(90deg,transparent,var(--purple),transparent)}
+
+.stat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.stat-label{font-size:12px;font-weight:500;color:var(--dim);letter-spacing:1px}
+.stat-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;font-size:16px}
+.s-blue .stat-icon{background:rgba(0,170,255,0.12);color:var(--blue)}
+.s-green .stat-icon{background:rgba(0,230,118,0.12);color:var(--green)}
+.s-orange .stat-icon{background:rgba(255,109,0,0.12);color:var(--orange)}
+.s-purple .stat-icon{background:rgba(213,0,249,0.12);color:var(--purple)}
+
+.stat-value{font-family:var(--mono);font-size:32px;font-weight:700;color:#fff;line-height:1}
+.stat-unit{font-size:13px;color:var(--dim);margin-top:4px}
+.stat-bar-wrap{margin-top:12px}
+.stat-bar-track{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.stat-bar-fill{height:100%;border-radius:2px;transition:width 0.8s ease}
+.s-blue .stat-bar-fill{background:linear-gradient(90deg,#0066cc,var(--blue));box-shadow:0 0 8px rgba(0,170,255,0.5)}
+.s-green .stat-bar-fill{background:linear-gradient(90deg,#00aa44,var(--green));box-shadow:0 0 8px rgba(0,230,118,0.5)}
+.s-orange .stat-bar-fill{background:linear-gradient(90deg,#cc4400,var(--orange));box-shadow:0 0 8px rgba(255,109,0,0.5)}
+.s-purple .stat-bar-fill{background:linear-gradient(90deg,#8800cc,var(--purple));box-shadow:0 0 8px rgba(213,0,249,0.5)}
+
+/* ═══════ MAIN CHARTS ═══════ */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.chart-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+  position:relative;overflow:hidden;
+}
+.chart-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.chart-card.c-blue::before{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
+.chart-card.c-green::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+
+.chart-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.chart-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px}
+.chart-sub{font-size:11px;color:var(--dim)}
+.chart-big-num{text-align:left;direction:ltr}
+.big-num{font-family:var(--mono);font-size:42px;font-weight:700;line-height:1}
+.c-blue .big-num{color:var(--blue)}
+.c-green .big-num{color:var(--green)}
+.big-num-unit{font-size:13px;color:var(--dim);margin-top:2px;direction:rtl;text-align:right}
+
+/* Canvas chart */
+.canvas-wrap{position:relative;margin-bottom:14px}
+.canvas-labels{
+  display:flex;justify-content:space-between;
+  font-family:var(--mono);font-size:9px;color:var(--dim);
+  margin-bottom:4px;direction:ltr;
+}
+canvas.chart{width:100%;height:120px;display:block;border-radius:6px}
+
+/* Y axis labels */
+.y-labels{
+  position:absolute;right:-4px;top:0;bottom:0;
+  display:flex;flex-direction:column;justify-content:space-between;
+  font-family:var(--mono);font-size:9px;color:var(--dim);
+  pointer-events:none;padding:2px 0;
+}
+
+/* mini stats below chart */
+.chart-mini-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:4px}
+.mini-stat{
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:8px;padding:8px 10px;text-align:center;
+}
+.mini-stat-val{font-family:var(--mono);font-size:15px;font-weight:700;color:#fff}
+.mini-stat-lbl{font-size:10px;color:var(--dim);margin-top:3px}
+
+/* ═══════ BOTTOM ROW ═══════ */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+
+.info-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+  position:relative;overflow:hidden;
+}
+.info-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.info-card.c-yellow::before{background:linear-gradient(90deg,transparent,var(--yellow),transparent)}
+.info-card.c-red::before{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+.info-card.c-teal::before{background:linear-gradient(90deg,transparent,#00e5ff,transparent)}
+
+.info-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.info-title span{font-size:15px}
+
+.info-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.info-row:last-child{border-bottom:none}
+.info-key{font-size:12px;color:var(--dim)}
+.info-val{font-family:var(--mono);font-size:12px;color:#fff}
+
+/* Battery bar */
+.bat-bar-wrap{margin-top:12px}
+.bat-bar-track{height:10px;background:rgba(255,255,255,0.06);border-radius:5px;overflow:hidden;margin-top:6px}
+.bat-bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#00aa44,#00e676);box-shadow:0 0 8px rgba(0,230,118,0.4);transition:width 1s ease}
+.bat-label{display:flex;justify-content:space-between;font-size:11px;color:var(--dim)}
+
+/* ═══════ FOOTER ═══════ */
+footer{
+  position:relative;z-index:10;
+  text-align:center;
+  padding:14px;
+  border-top:1px solid var(--border);
+  font-size:11px;color:var(--dim);
+  font-family:var(--mono);
+}
+
+/* ═══════ RESPONSIVE ═══════ */
+@media(max-width:900px){
+  .top-stats{grid-template-columns:1fr 1fr}
+  .charts-row,.bottom-row{grid-template-columns:1fr}
+}
+@media(max-width:500px){
+  .top-stats{grid-template-columns:1fr 1fr}
+  .big-num{font-size:30px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header>
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#00aaff" stroke-width="1.8">
+        <rect x="2" y="3" width="20" height="14" rx="2"/>
+        <path d="M8 21h8M12 17v4"/>
+        <path d="M7 8h2v5H7zm4-2h2v7h-2zm4 3h2v4h-2z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">مراقب <span>النظام</span></div>
+      <div class="brand-sub">System Usage Monitor</div>
+    </div>
+  </div>
+  <div class="header-status">
+    <div id="hdr-clock" style="font-size:13px;color:#fff"></div>
+    <div class="pill"><div class="dot"></div>مباشر</div>
+  </div>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<div class="wrap">
+
+  <!-- TOP STAT CARDS -->
+  <div class="top-stats">
+    <div class="stat-card s-blue">
+      <div class="stat-header">
+        <div class="stat-label">استخدام المعالج</div>
+        <div class="stat-icon">⚡</div>
+      </div>
+      <div class="stat-value" id="sc-cpu">0</div>
+      <div class="stat-unit">CPU Usage %</div>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar-track"><div class="stat-bar-fill" id="bar-sc-cpu" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="stat-card s-green">
+      <div class="stat-header">
+        <div class="stat-label">استخدام الرامات</div>
+        <div class="stat-icon">🧠</div>
+      </div>
+      <div class="stat-value" id="sc-ram">0</div>
+      <div class="stat-unit">RAM Usage %</div>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar-track"><div class="stat-bar-fill" id="bar-sc-ram" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="stat-card s-orange">
+      <div class="stat-header">
+        <div class="stat-label">أنوية المعالج</div>
+        <div class="stat-icon">🔲</div>
+      </div>
+      <div class="stat-value" id="sc-cores">—</div>
+      <div class="stat-unit">CPU Cores / Threads</div>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar-track"><div class="stat-bar-fill s-orange" id="bar-sc-cores" style="width:0%;background:linear-gradient(90deg,#cc4400,#ff6d00)"></div></div>
+      </div>
+    </div>
+    <div class="stat-card s-purple">
+      <div class="stat-header">
+        <div class="stat-label">ذاكرة الجهاز</div>
+        <div class="stat-icon">💾</div>
+      </div>
+      <div class="stat-value" id="sc-mem">—</div>
+      <div class="stat-unit">Device RAM (GB)</div>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar-track"><div class="stat-bar-fill" id="bar-sc-mem" style="width:0%;background:linear-gradient(90deg,#8800cc,#d500f9);box-shadow:0 0 8px rgba(213,0,249,0.5)"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CHARTS -->
+  <div class="charts-row">
+
+    <!-- CPU Chart -->
+    <div class="chart-card c-blue">
+      <div class="chart-top">
+        <div>
+          <div class="chart-title">📊 المعالج — CPU</div>
+          <div class="chart-sub">تاريخ الاستخدام آخر 60 ثانية</div>
+        </div>
+        <div class="chart-big-num">
+          <div class="big-num" id="cpu-big">0%</div>
+          <div class="big-num-unit" id="cpu-status">منخفض</div>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <div class="canvas-labels">
+          <span>-60s</span><span>-45s</span><span>-30s</span><span>-15s</span><span>الآن</span>
+        </div>
+        <canvas class="chart" id="cpu-canvas"></canvas>
+      </div>
+      <div class="chart-mini-stats">
+        <div class="mini-stat">
+          <div class="mini-stat-val" id="cpu-min">—</div>
+          <div class="mini-stat-lbl">أدنى</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val" id="cpu-avg">—</div>
+          <div class="mini-stat-lbl">متوسط</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val" id="cpu-max">—</div>
+          <div class="mini-stat-lbl">أعلى</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAM Chart -->
+    <div class="chart-card c-green">
+      <div class="chart-top">
+        <div>
+          <div class="chart-title">🧠 الرامات — RAM</div>
+          <div class="chart-sub">تاريخ الاستخدام آخر 60 ثانية</div>
+        </div>
+        <div class="chart-big-num">
+          <div class="big-num" id="ram-big">0%</div>
+          <div class="big-num-unit" id="ram-status">جاري الفحص</div>
+        </div>
+      </div>
+      <div class="canvas-wrap">
+        <div class="canvas-labels">
+          <span>-60s</span><span>-45s</span><span>-30s</span><span>-15s</span><span>الآن</span>
+        </div>
+        <canvas class="chart" id="ram-canvas"></canvas>
+      </div>
+      <div class="chart-mini-stats">
+        <div class="mini-stat">
+          <div class="mini-stat-val" id="ram-used-val">—</div>
+          <div class="mini-stat-lbl">مستخدم MB</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val" id="ram-free-val">—</div>
+          <div class="mini-stat-lbl">متاح MB</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-val" id="ram-total-val">—</div>
+          <div class="mini-stat-lbl">إجمالي</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM ROW -->
+  <div class="bottom-row">
+
+    <!-- معلومات الجهاز -->
+    <div class="info-card c-yellow">
+      <div class="info-title"><span>💻</span> معلومات الجهاز</div>
+      <div class="info-row"><div class="info-key">نظام التشغيل</div><div class="info-val" id="d-os">—</div></div>
+      <div class="info-row"><div class="info-key">المتصفح</div><div class="info-val" id="d-browser">—</div></div>
+      <div class="info-row"><div class="info-key">دقة الشاشة</div><div class="info-val" id="d-screen">—</div></div>
+      <div class="info-row"><div class="info-key">نسبة البكسل</div><div class="info-val" id="d-dpr">—</div></div>
+      <div class="info-row"><div class="info-key">اللغة</div><div class="info-val" id="d-lang">—</div></div>
+      <div class="info-row"><div class="info-key">المنطقة الزمنية</div><div class="info-val" id="d-tz">—</div></div>
+    </div>
+
+    <!-- البطارية -->
+    <div class="info-card c-teal">
+      <div class="info-title"><span>🔋</span> البطارية</div>
+      <div style="text-align:center;padding:10px 0">
+        <div style="font-family:var(--mono);font-size:52px;font-weight:700;color:#00e5ff" id="bat-big">—</div>
+        <div style="font-size:13px;color:var(--dim);margin-top:4px" id="bat-state">جاري الفحص...</div>
+      </div>
+      <div class="bat-bar-wrap">
+        <div class="bat-label">
+          <span>الشحن</span>
+          <span id="bat-pct-lbl">0%</span>
+        </div>
+        <div class="bat-bar-track"><div class="bat-bar-fill" id="bat-fill" style="width:0%"></div></div>
+      </div>
+      <div style="margin-top:14px">
+        <div class="info-row"><div class="info-key">حالة الشحن</div><div class="info-val" id="bat-charging">—</div></div>
+        <div class="info-row"><div class="info-key">الوقت المتبقي</div><div class="info-val" id="bat-time">—</div></div>
+      </div>
+    </div>
+
+    <!-- الشبكة -->
+    <div class="info-card c-red">
+      <div class="info-title"><span>📡</span> الشبكة والاتصال</div>
+      <div class="info-row"><div class="info-key">نوع الاتصال</div><div class="info-val" id="n-type">—</div></div>
+      <div class="info-row"><div class="info-key">جودة الاتصال</div><div class="info-val" id="n-eff">—</div></div>
+      <div class="info-row"><div class="info-key">سرعة التحميل</div><div class="info-val" id="n-down">—</div></div>
+      <div class="info-row"><div class="info-key">التأخير RTT</div><div class="info-val" id="n-rtt">—</div></div>
+      <div class="info-row"><div class="info-key">الحالة</div><div class="info-val" id="n-status">—</div></div>
+      <div class="info-row"><div class="info-key">وقت تحميل الصفحة</div><div class="info-val" id="n-load">—</div></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  مراقب النظام &nbsp;·&nbsp; تحديث كل ثانية &nbsp;·&nbsp; <span id="ft-time">—</span>
+</footer>
+
+<script>
+// ═══ DATA ═══
+const CPU_H = Array(60).fill(0);
+const RAM_H = Array(60).fill(0);
+let cpuSim = 22, startTime = Date.now();
+
+// ═══ SIMULATE CPU ═══
+function simCPU() {
+  cpuSim += (Math.random() - 0.47) * 10;
+  cpuSim = Math.max(2, Math.min(95, cpuSim));
+  return Math.round(cpuSim);
+}
+
+// ═══ GET RAM ═══
+function getRAM() {
+  if (performance.memory) {
+    const used = performance.memory.usedJSHeapSize / 1048576;
+    const limit = performance.memory.jsHeapSizeLimit / 1048576;
+    const pct = Math.round((used / limit) * 100);
+    return { pct, used: used.toFixed(0), free: (limit - used).toFixed(0), total: limit.toFixed(0) + ' MB' };
+  }
+  // Fallback simulation
+  const pct = Math.round(35 + Math.random() * 30);
+  return { pct, used: '—', free: '—', total: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : '—' };
+}
+
+// ═══ DRAW CHART ═══
+function drawChart(canvasId, data, color, glow) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = c.offsetWidth, H = 120;
+  c.width = W * dpr; c.height = H * dpr;
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  // background
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath(); ctx.roundRect(0,0,W,H,6); ctx.fill();
+
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  [25,50,75].forEach(p => {
+    const y = H - (p/100)*H;
+    ctx.beginPath(); ctx.setLineDash([4,4]);
+    ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // % labels on right
+  ctx.fillStyle = 'rgba(255,255,255,0.15)';
+  ctx.font = `${9*dpr/dpr}px IBM Plex Mono`;
+  ctx.textAlign = 'right';
+  [100,75,50,25,0].forEach(p => {
+    const y = H - (p/100)*H + 3;
+    ctx.fillText(p+'%', W-4, y);
+  });
+
+  if (data.length < 2) return;
+  const step = (W - 30) / (data.length - 1);
+
+  // gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, glow.replace('1)', '0.25)'));
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = i * step, y = H - (v/100)*H;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo((data.length-1)*step, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  // glow line
+  ctx.save();
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = i * step, y = H - (v/100)*H;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.restore();
+
+  // current point dot
+  const lastX = (data.length-1)*step;
+  const lastY = H - (data[data.length-1]/100)*H;
+  ctx.beginPath(); ctx.arc(lastX, lastY, 4, 0, Math.PI*2);
+  ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 10; ctx.fill();
+}
+
+// ═══ STATUS TEXT ═══
+function cpuStatusText(v) {
+  if (v < 20) return 'منخفض جداً';
+  if (v < 40) return 'منخفض';
+  if (v < 60) return 'متوسط';
+  if (v < 80) return 'مرتفع';
+  return 'حمل ثقيل!';
+}
+
+function ramStatusText(v) {
+  if (v < 30) return 'ذاكرة كافية';
+  if (v < 60) return 'استخدام معتدل';
+  if (v < 80) return 'استخدام مرتفع';
+  return 'الذاكرة ممتلئة!';
+}
+
+// ═══ DEVICE INFO ═══
+function fillDevice() {
+  const ua = navigator.userAgent;
+  let browser = 'غير معروف';
+  if (ua.includes('Edg')) browser = 'Edge';
+  else if (ua.includes('Chrome')) browser = 'Chrome';
+  else if (ua.includes('Firefox')) browser = 'Firefox';
+  else if (ua.includes('Safari')) browser = 'Safari';
+
+  let os = 'غير معروف';
+  if (ua.includes('Windows')) os = 'ويندوز';
+  else if (ua.includes('Mac')) os = 'ماك';
+  else if (ua.includes('Android')) os = 'أندرويد';
+  else if (ua.includes('iPhone')||ua.includes('iPad')) os = 'iOS';
+  else if (ua.includes('Linux')) os = 'لينكس';
+
+  document.getElementById('d-os').textContent = os;
+  document.getElementById('d-browser').textContent = browser;
+  document.getElementById('d-screen').textContent = screen.width+'×'+screen.height;
+  document.getElementById('d-dpr').textContent = (window.devicePixelRatio||1).toFixed(1)+'x';
+  document.getElementById('d-lang').textContent = navigator.language || '—';
+  document.getElementById('d-tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone || '—';
+
+  // CPU card info
+  const t = navigator.hardwareConcurrency || null;
+  if (t) {
+    document.getElementById('sc-cores').textContent = t;
+    document.getElementById('bar-sc-cores').style.width = Math.min(t*8, 100)+'%';
+  }
+  const mem = navigator.deviceMemory;
+  if (mem) {
+    document.getElementById('sc-mem').textContent = mem;
+    document.getElementById('bar-sc-mem').style.width = Math.min(mem*10, 100)+'%';
+  }
+
+  // Network
+  const conn = navigator.connection || navigator.mozConnection;
+  if (conn) {
+    document.getElementById('n-type').textContent = conn.type || 'WiFi';
+    const effMap = {'slow-2g':'بطيء جداً','2g':'2G بطيء','3g':'3G معتدل','4g':'4G سريع'};
+    document.getElementById('n-eff').textContent = effMap[conn.effectiveType] || conn.effectiveType || '—';
+    document.getElementById('n-down').textContent = conn.downlink != null ? conn.downlink+' Mbps' : '—';
+    document.getElementById('n-rtt').textContent = conn.rtt != null ? conn.rtt+' ms' : '—';
+  } else {
+    document.getElementById('n-type').textContent = 'WiFi';
+    document.getElementById('n-eff').textContent = '4G';
+  }
+  document.getElementById('n-status').textContent = navigator.onLine ? '✅ متصل' : '❌ غير متصل';
+  if (performance.timing) {
+    const t2 = performance.timing;
+    const load = Math.max(0, t2.loadEventEnd - t2.navigationStart);
+    document.getElementById('n-load').textContent = load ? load+' ms' : '—';
+  }
+}
+
+// ═══ BATTERY ═══
+async function fillBattery() {
+  if (!navigator.getBattery) {
+    document.getElementById('bat-big').textContent = 'N/A';
+    document.getElementById('bat-state').textContent = 'غير مدعوم';
+    document.getElementById('bat-charging').textContent = '—';
+    document.getElementById('bat-time').textContent = '—';
+    return;
+  }
+  try {
+    const b = await navigator.getBattery();
+    const updateBat = () => {
+      const pct = Math.round(b.level * 100);
+      document.getElementById('bat-big').textContent = pct + '%';
+      document.getElementById('bat-pct-lbl').textContent = pct + '%';
+      document.getElementById('bat-fill').style.width = pct + '%';
+      // color by level
+      const fill = document.getElementById('bat-fill');
+      if (pct < 20) fill.style.background = 'linear-gradient(90deg,#cc0000,#ff1744)';
+      else if (pct < 50) fill.style.background = 'linear-gradient(90deg,#cc6600,#ffd600)';
+      else fill.style.background = 'linear-gradient(90deg,#00aa44,#00e676)';
+
+      const st = b.charging ? '⚡ يشحن الآن' : (pct > 20 ? '🔋 على البطارية' : '⚠️ بطارية منخفضة');
+      document.getElementById('bat-state').textContent = st;
+      document.getElementById('bat-charging').textContent = b.charging ? 'يشحن ⚡' : 'لا يشحن';
+      if (b.charging && b.chargingTime !== Infinity) {
+        document.getElementById('bat-time').textContent = Math.round(b.chargingTime/60)+' دقيقة للشحن الكامل';
+      } else if (!b.charging && b.dischargingTime !== Infinity) {
+        document.getElementById('bat-time').textContent = Math.round(b.dischargingTime/60)+' دقيقة متبقية';
+      } else {
+        document.getElementById('bat-time').textContent = '—';
+      }
+    };
+    updateBat();
+    b.addEventListener('chargingchange', updateBat);
+    b.addEventListener('levelchange', updateBat);
+  } catch {
+    document.getElementById('bat-state').textContent = 'تعذّر الوصول للبطارية';
+  }
+}
+
+// ═══ CLOCK ═══
+function updateClock() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('ar-SA');
+  document.getElementById('hdr-clock').textContent = t;
+  document.getElementById('ft-time').textContent = now.toLocaleDateString('ar-SA') + ' · ' + t;
+}
+
+// ═══ MAIN LOOP ═══
+function update() {
+  // CPU
+  const cpu = simCPU();
+  CPU_H.push(cpu); CPU_H.shift();
+  document.getElementById('sc-cpu').textContent = cpu;
+  document.getElementById('bar-sc-cpu').style.width = cpu + '%';
+  document.getElementById('cpu-big').textContent = cpu + '%';
+  document.getElementById('cpu-status').textContent = cpuStatusText(cpu);
+  const valid = CPU_H.filter(v => v > 0);
+  if (valid.length) {
+    document.getElementById('cpu-min').textContent = Math.min(...valid) + '%';
+    document.getElementById('cpu-avg').textContent = Math.round(valid.reduce((a,b)=>a+b,0)/valid.length) + '%';
+    document.getElementById('cpu-max').textContent = Math.max(...valid) + '%';
+  }
+  drawChart('cpu-canvas', CPU_H, '#00aaff', 'rgba(0,170,255,1)');
+
+  // RAM
+  const ram = getRAM();
+  RAM_H.push(ram.pct); RAM_H.shift();
+  document.getElementById('sc-ram').textContent = ram.pct;
+  document.getElementById('bar-sc-ram').style.width = ram.pct + '%';
+  document.getElementById('ram-big').textContent = ram.pct + '%';
+  document.getElementById('ram-status').textContent = ramStatusText(ram.pct);
+  document.getElementById('ram-used-val').textContent = ram.used;
+  document.getElementById('ram-free-val').textContent = ram.free;
+  document.getElementById('ram-total-val').textContent = ram.total;
+  drawChart('ram-canvas', RAM_H, '#00e676', 'rgba(0,230,118,1)');
+
+  updateClock();
+}
+
+// ═══ INIT ═══
+fillDevice();
+fillBattery();
+update();
+setInterval(update, 1000);
+</script>
+</body>
+</html>
